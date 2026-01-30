@@ -17,19 +17,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += link_pkgconfig debug
 
 SOURCES += \
-        $$PWD/main.cpp \
-        $$PWD/QrCodeReader.cpp \
-        $$PWD/quirc/quirc.c \
-        $$PWD/quirc/decode.c \
-        $$PWD/quirc/identify.c \
-        $$PWD/quirc/version_db.c
+        main.cpp \
+        QrCodeReader.cpp \
+        quirc/quirc.c \
+        quirc/decode.c \
+        quirc/identify.c \
+        quirc/version_db.c
 
 HEADERS += \
-        $$PWD/QrCodeReader.h \
-        $$PWD/quirc/quirc.h \
-        $$PWD/quirc/quirc_internal.h
+        QrCodeReader.h \
+        quirc/quirc.h \
+        quirc/quirc_internal.h
 
-RESOURCES += $$PWD/qml.qrc
+RESOURCES += qml.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
