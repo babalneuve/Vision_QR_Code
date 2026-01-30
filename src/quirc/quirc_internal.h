@@ -18,6 +18,7 @@
 #define QUIRC_INTERNAL_H_
 
 #include <stdint.h>
+#include <stddef.h>
 #include "quirc.h"
 
 #define QUIRC_PIXEL_WHITE   0
@@ -114,7 +115,7 @@ struct quirc_rs_params {
 
 struct quirc_version_info {
     uint16_t data_bytes;
-    uint8_t apat[7];
+    uint8_t apat[8];
     struct quirc_rs_params ecc[4];
 };
 
