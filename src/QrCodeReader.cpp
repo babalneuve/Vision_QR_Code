@@ -169,6 +169,49 @@ void QrCodeReader::onGrabComplete()
     timer.start();
 
     QImage image = result->image();
+
+    // DEBUG: Save first frames to verify grabToImage() works with HmiDigitalCamera
+    // Check /data/debug_frame_*.png on device to verify frames contain video content
+    // If frames are black/transparent, grabToImage() doesn't work with hardware overlay
+    static int debugFrameCount = 0;
+    if (debugFrameCount < 5) {
+        QString path = QString("/data/debug_frame_%1.png").arg(debugFrameCount);
+        bool saved = image.save(path);
+
+        // Calculate non-zero pixel percentage to detect black frames
+        int nonZeroPixels = 0;
+        int totalPixels = image.width() * image.height();
+        if (totalPixels > 0) {
+            QImage checkImage = image.convertToFormat(QImage::Format_ARGB32);
+            for (int y = 0; y < checkImage.height(); y++) {
+                const QRgb *line = reinterpret_cast<const QRgb*>(checkImage.constScanLine(y));
+                for (int x = 0; x < checkImage.width(); x++) {
+                    QRgb pixel = line[x];
+                    // Check if pixel has any color (not black) or is not fully transparent
+                    if (qRed(pixel) > 0 || qGreen(pixel) > 0 || qBlue(pixel) > 0) {
+                        nonZeroPixels++;
+                    }
+                }
+            }
+        }
+        int nonZeroPercent = totalPixels > 0 ? (nonZeroPixels * 100 / totalPixels) : 0;
+
+        qDebug() << "DEBUG FRAME" << debugFrameCount << ":"
+                 << "saved=" << saved
+                 << "path=" << path
+                 << "size=" << image.size()
+                 << "format=" << image.format()
+                 << "isNull=" << image.isNull()
+                 << "nonZeroPixels=" << nonZeroPercent << "%";
+
+        if (nonZeroPercent < 5) {
+            qWarning() << "WARNING: Frame appears to be mostly black/empty!"
+                       << "grabToImage() may not work with HmiDigitalCamera hardware overlay.";
+        }
+
+        debugFrameCount++;
+    }
+
     QString decoded = decode(image);
 
     int elapsed = timer.elapsed();
