@@ -3,8 +3,11 @@
 #include <QQuickWindow>
 #include <QDebug>
 #include <QQmlContext>
+#include <QtQml>
 #include <QDir>
 #include <QPluginLoader>
+
+#include "QrCodeReader.h"
 
 QObject * findByClassName(const QObject * const o, const char *name) {
   QObject * res = nullptr;
@@ -31,8 +34,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_NativeWindows);
 
     QGuiApplication app(argc, argv);
-    QQmlApplicationEngine engine;
 
+    // Register QrCodeReader type for QML
+    qmlRegisterType<QrCodeReader>("com.qrcode", 1, 0, "QrCodeReader");
+
+    QQmlApplicationEngine engine;
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
 

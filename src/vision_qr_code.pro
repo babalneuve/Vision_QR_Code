@@ -17,7 +17,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += link_pkgconfig debug
 
 SOURCES += \
-        $$PWD/main.cpp
+        $$PWD/main.cpp \
+        $$PWD/QrCodeReader.cpp \
+        $$PWD/quirc/quirc.c \
+        $$PWD/quirc/decode.c \
+        $$PWD/quirc/identify.c \
+        $$PWD/quirc/version_db.c
+
+HEADERS += \
+        $$PWD/QrCodeReader.h \
+        $$PWD/quirc/quirc.h \
+        $$PWD/quirc/quirc_internal.h
 
 RESOURCES += $$PWD/qml.qrc
 

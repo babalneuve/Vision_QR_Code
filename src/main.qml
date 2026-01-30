@@ -5,6 +5,7 @@ import QtQuick.Window 2.12
 import QtMultimedia 5.11
 /*import QtQuick.VirtualKeyboard 2.1*/
 import com.hmi.qmlcomponents 1.2
+import com.qrcode 1.0
 
 /* Defines the main window which will be shown full screen */
 Window {
@@ -20,6 +21,43 @@ Window {
     property bool isVision307: (Screen.width == 800 && Screen.height == 480)
     property real displayScaleX: isVision307 ? (800/1280) : 1
     property real displayScaleY: isVision307 ? (480/800) : 1
+
+    // QR Code Reader for camera1
+    QrCodeReader {
+        id: qrReader1
+        target: camera1
+        scanInterval: 300
+        scanning: true
+
+        onQrCodeDetected: {
+            console.log("QR Code detected on Camera 1: " + data)
+            qrResultText.text = data
+            qrResultRect.visible = true
+            qrHideTimer.restart()
+        }
+    }
+
+    // QR Code Reader for camera2
+    QrCodeReader {
+        id: qrReader2
+        target: camera2
+        scanInterval: 300
+        scanning: true
+
+        onQrCodeDetected: {
+            console.log("QR Code detected on Camera 2: " + data)
+            qrResultText.text = data
+            qrResultRect.visible = true
+            qrHideTimer.restart()
+        }
+    }
+
+    // Timer to hide QR result after a delay
+    Timer {
+        id: qrHideTimer
+        interval: 5000
+        onTriggered: qrResultRect.visible = false
+    }
 
     Item {
         id: itemId
@@ -188,7 +226,71 @@ Window {
 
                     onClicked: {
                         stopButton2.stopPipeline2();
-                    }   
+                    }
+                }
+
+                // QR Scanning toggle button
+                Button {
+                    id: qrScanToggle
+                    Layout.preferredWidth: 170
+                    Layout.preferredHeight: 40
+                    text: qrReader1.scanning ? qsTr("Stop QR Scan") : qsTr("Start QR Scan")
+                    font.pixelSize: 15
+
+                    onClicked: {
+                        qrReader1.scanning = !qrReader1.scanning
+                        qrReader2.scanning = !qrReader2.scanning
+                    }
+                }
+
+                // QR Code result display
+                Rectangle {
+                    id: qrResultRect
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 80
+                    color: "#e0ffe0"
+                    border.color: "#00aa00"
+                    border.width: 2
+                    radius: 5
+                    visible: false
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 5
+
+                        Text {
+                            text: qsTr("QR Code Detected:")
+                            font.pixelSize: 12
+                            font.bold: true
+                            color: "#006600"
+                        }
+
+                        Text {
+                            id: qrResultText
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            text: ""
+                            font.pixelSize: 11
+                            wrapMode: Text.WrapAnywhere
+                            elide: Text.ElideRight
+                            maximumLineCount: 3
+                            color: "#000000"
+                        }
+                    }
+                }
+
+                // Scanning indicator
+                Rectangle {
+                    Layout.preferredWidth: 170
+                    Layout.preferredHeight: 30
+                    color: qrReader1.scanning ? "#aaffaa" : "#ffaaaa"
+                    radius: 3
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: qrReader1.scanning ? qsTr("Scanning...") : qsTr("Scan Stopped")
+                        font.pixelSize: 12
+                    }
                 }
             }
         }
