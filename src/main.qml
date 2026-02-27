@@ -3,7 +3,6 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.11
 import QtQuick.Window 2.12
 import QtMultimedia 5.11
-/*import QtQuick.VirtualKeyboard 2.1*/
 import com.hmi.qmlcomponents 1.2
 import com.qrcode 1.0
 
@@ -27,7 +26,7 @@ Window {
         id: qrReader1
         target: camera1
         scanInterval: 300
-        scanning: true
+        Component.onCompleted: scanning = true
 
         onQrCodeDetected: {
             console.log("QR Code detected on Camera 1: " + data)
@@ -42,7 +41,7 @@ Window {
         id: qrReader2
         target: camera2
         scanInterval: 300
-        scanning: true
+        Component.onCompleted: scanning = true
 
         onQrCodeDetected: {
             console.log("QR Code detected on Camera 2: " + data)
@@ -121,11 +120,6 @@ Window {
                     Layout.preferredHeight: 40
                     text: camera1.camera_info.ip + ":" + camera1.camera_info.port.toString()
                     inputMethodHints: Qt.ImhFormattedNumbersOnly
-/*                  onActiveFocusChanged: {
-                        if (activeFocus) {
-                            Qt.inputMethod.show();
-                        }
-                    } */
                 }
 
                 Button {
@@ -146,10 +140,7 @@ Window {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 40
                     text: camera2.camera_info.ip + ":" + camera2.camera_info.port.toString()
-/*                  inputMethodHints: Qt.ImhFormattedNumbersOnly
-                    onClicked: {
-                        Qt.inputMethod.show();
-                    } */
+                    inputMethodHints: Qt.ImhFormattedNumbersOnly
                 }
 
                 Button {
@@ -164,8 +155,8 @@ Window {
 
                     onClicked: changeIPButton2.ipChange2(ipcamera2.text);
                 }
-                
-        Button {
+
+                Button {
                     id: resetPipelineButton1
                     objectName: "reset_pipeline_button1"
                     Layout.preferredWidth: 170
@@ -181,8 +172,8 @@ Window {
                         camera1.visible = true;
                     }
                 }
-        
-        Button {
+
+                Button {
                     id: stopButton1
                     objectName: "stop_button1"
                     Layout.preferredWidth: 170
@@ -196,8 +187,8 @@ Window {
                         stopButton1.stopPipeline1();
                     }
                 }
-        
-        Button {
+
+                Button {
                     id: resetPipelineButton2
                     objectName: "reset_pipeline_button2"
                     Layout.preferredWidth: 170
@@ -212,9 +203,9 @@ Window {
                         resetPipelineButton2.resetPipeline2();
                         camera2.visible = true;
                     }
-                 }
-        
-        Button {
+                }
+
+                Button {
                     id: stopButton2
                     objectName: "stop_button2"
                     Layout.preferredWidth: 170
@@ -295,11 +286,4 @@ Window {
             }
         }
     }
-
-/*    InputPanel {
-        id: inputPanel
-        z: 100
-        anchors.fill: parent
-        visible: Qt.inputMethod.visible
-    } */
 }
