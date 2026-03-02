@@ -12,8 +12,12 @@
 #include <QObject>
 #include <QImage>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QQuickItem>
+#include <QQuickItemGrabResult>
 #include <QString>
+#include <QVideoProbe>
+#include <QVideoFrame>
 
 // Forward declaration
 struct quirc;
@@ -33,6 +37,7 @@ class QrCodeReader : public QObject
     Q_PROPERTY(int scanInterval READ scanInterval WRITE setScanInterval NOTIFY scanIntervalChanged)
     Q_PROPERTY(QString lastResult READ lastResult NOTIFY qrCodeDetected)
     Q_PROPERTY(QQuickItem* target READ target WRITE setTarget NOTIFY targetChanged)
+    Q_PROPERTY(QObject* source READ source WRITE setSource NOTIFY sourceChanged)
 
 public:
     /**
@@ -89,6 +94,18 @@ public:
     void setTarget(QQuickItem* item);
 
     /**
+     * @brief Get the source camera object for QVideoProbe
+     * @return Pointer to source QObject (Camera)
+     */
+    QObject* source() const;
+
+    /**
+     * @brief Set the source camera object for QVideoProbe
+     * @param obj The Camera QML element to probe frames from
+     */
+    void setSource(QObject* obj);
+
+    /**
      * @brief Decode QR code from a QImage
      * @param image The image to scan for QR codes
      * @return Decoded QR code data, or empty string if none found
@@ -127,6 +144,11 @@ signals:
     void targetChanged();
 
     /**
+     * @brief Emitted when source camera changes
+     */
+    void sourceChanged();
+
+    /**
      * @brief Emitted when a scan completes (for debugging)
      * @param found Whether a QR code was found
      * @param timeMs Time taken for the scan in milliseconds
@@ -144,7 +166,22 @@ private slots:
      */
     void onGrabComplete();
 
+    /**
+     * @brief Called when QVideoProbe receives a frame
+     */
+    void onVideoFrame(const QVideoFrame &frame);
+
+    /**
+     * @brief Retry probe attachment when camera status changes
+     */
+    void tryAttachProbe();
+
 private:
+    /**
+     * @brief Attempt to attach QVideoProbe to source's mediaObject
+     * @return true if probe was successfully attached
+     */
+    bool attachProbe();
     /**
      * @brief Convert QImage to grayscale for quirc processing
      * @param image Input image (any format)
@@ -165,8 +202,12 @@ private:
     int m_scanInterval;             ///< Scan interval in ms
     QString m_lastResult;           ///< Last detected QR code
     QQuickItem *m_target;           ///< Target item for frame capture
+    QSharedPointer<QQuickItemGrabResult> m_grabResult; ///< Prevents grab result from being destroyed before ready signal
     QString m_pendingResult;        ///< Result from last debounce check
     int m_debounceCount;            ///< Count of same results for debouncing
+    QObject *m_source;              ///< Source camera object for QVideoProbe
+    QVideoProbe *m_videoProbe;      ///< Probes raw frames from camera pipeline
+    QElapsedTimer m_frameClock;     ///< Throttle probe frame processing
 };
 
 #endif // QRCODEREADER_H
