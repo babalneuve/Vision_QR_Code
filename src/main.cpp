@@ -65,14 +65,32 @@ int main(int argc, char *argv[])
         QObject::connect(button1, SIGNAL(ipChange1(QString)), cam1, SLOT(changeIP(QString)));
     if (button2)
         QObject::connect(button2, SIGNAL(ipChange2(QString)), cam2, SLOT(changeIP(QString)));
-    if (resetButton1)
-        QObject::connect(resetButton1, SIGNAL(resetPipeline1()), cam1, SLOT(resetPipeline()));
-    if (stopButton1)
-        QObject::connect(stopButton1, SIGNAL(stopPipeline1()), cam1, SLOT(releasePipeline()));
-    if (resetButton2)
-        QObject::connect(resetButton2, SIGNAL(resetPipeline2()), cam2, SLOT(resetPipeline()));
-    if (stopButton2)
-        QObject::connect(stopButton2, SIGNAL(stopPipeline2()), cam2, SLOT(releasePipeline()));
+    // resetPipeline() and releasePipeline() are Q_INVOKABLE (not slots),
+    // so use index-based QMetaObject::connect() instead of SIGNAL/SLOT macros.
+    if (resetButton1) {
+        int sig = resetButton1->metaObject()->indexOfSignal("resetPipeline1()");
+        int method = cam1->metaObject()->indexOfMethod("resetPipeline()");
+        if (sig >= 0 && method >= 0)
+            QMetaObject::connect(resetButton1, sig, cam1, method);
+    }
+    if (stopButton1) {
+        int sig = stopButton1->metaObject()->indexOfSignal("stopPipeline1()");
+        int method = cam1->metaObject()->indexOfMethod("releasePipeline()");
+        if (sig >= 0 && method >= 0)
+            QMetaObject::connect(stopButton1, sig, cam1, method);
+    }
+    if (resetButton2) {
+        int sig = resetButton2->metaObject()->indexOfSignal("resetPipeline2()");
+        int method = cam2->metaObject()->indexOfMethod("resetPipeline()");
+        if (sig >= 0 && method >= 0)
+            QMetaObject::connect(resetButton2, sig, cam2, method);
+    }
+    if (stopButton2) {
+        int sig = stopButton2->metaObject()->indexOfSignal("stopPipeline2()");
+        int method = cam2->metaObject()->indexOfMethod("releasePipeline()");
+        if (sig >= 0 && method >= 0)
+            QMetaObject::connect(stopButton2, sig, cam2, method);
+    }
 
     return app.exec();
 }

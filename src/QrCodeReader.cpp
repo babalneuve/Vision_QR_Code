@@ -78,8 +78,8 @@ void QrCodeReader::setScanning(bool enabled)
             m_scanTimer->start();
             qDebug() << "QrCodeReader: Started scanning via grabToImage with interval" << m_scanInterval << "ms";
         } else {
-            qWarning() << "QrCodeReader: Cannot start scanning - no source or target set";
-            m_scanning = false;
+            // No source or target yet — flag stays true; setTarget()/setSource() will start scanning
+            qDebug() << "QrCodeReader: Scanning requested, waiting for source or target";
         }
     } else {
         m_scanTimer->stop();
@@ -132,6 +132,12 @@ void QrCodeReader::setTarget(QQuickItem* item)
 
     m_target = item;
     emit targetChanged();
+
+    // If scanning was requested before target was available, start now
+    if (m_scanning && m_target && !m_videoProbe && !m_source) {
+        m_scanTimer->start();
+        qDebug() << "QrCodeReader: Target now available, starting deferred scan";
+    }
 }
 
 QObject* QrCodeReader::source() const
