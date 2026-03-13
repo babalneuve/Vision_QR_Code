@@ -208,6 +208,7 @@ private:
     QObject *m_source;              ///< Source camera object for QVideoProbe
     QVideoProbe *m_videoProbe;      ///< Probes raw frames from camera pipeline
     QElapsedTimer m_frameClock;     ///< Throttle probe frame processing
+    QElapsedTimer m_grabTimer;      ///< Detect stuck grabToImage calls
 };
 
 #endif // QRCODEREADER_H

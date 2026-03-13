@@ -254,20 +254,36 @@ void QrCodeReader::scanOnce()
 
 void QrCodeReader::performScan()
 {
+    static int scanCount = 0;
+    scanCount++;
+
     if (!m_target || !m_quirc) {
+        if (scanCount % 10 == 1)
+            qDebug() << "QrCodeReader: performScan skipped - target:" << (m_target != nullptr) << "quirc:" << (m_quirc != nullptr);
         return;
+    }
+
+    // Safety net: reset grab if it has been pending for too long
+    if (m_grabResult && m_grabTimer.isValid() && m_grabTimer.elapsed() > 2000) {
+        qWarning() << "QrCodeReader: grab timed out after" << m_grabTimer.elapsed() << "ms, resetting";
+        m_grabResult.reset();
     }
 
     // Skip if a previous grab is still in-flight
     if (m_grabResult) {
+        qDebug() << "QrCodeReader: grabToImage still in-flight, skipping";
         return;
     }
+
+    if (scanCount % 10 == 1)
+        qDebug() << "QrCodeReader: performScan firing (count:" << scanCount << ")";
 
     // Store in member to prevent destruction before ready signal fires
     m_grabResult = m_target->grabToImage();
     if (!m_grabResult) {
         qWarning() << "QrCodeReader: grabToImage() returned null";
     } else {
+        m_grabTimer.start();
         connect(m_grabResult.data(), &QQuickItemGrabResult::ready,
                 this, &QrCodeReader::onGrabComplete);
     }
@@ -277,6 +293,7 @@ void QrCodeReader::onGrabComplete()
 {
     QQuickItemGrabResult *result = qobject_cast<QQuickItemGrabResult*>(sender());
     if (!result) {
+        qWarning() << "QrCodeReader: onGrabComplete sender cast failed";
         m_grabResult.reset();
         return;
     }
@@ -293,6 +310,8 @@ void QrCodeReader::onGrabComplete()
         qWarning() << "QrCodeReader: grabbed image is null";
         return;
     }
+
+    qDebug() << "QrCodeReader: Frame captured:" << image.width() << "x" << image.height();
 
     QString decoded = decode(image);
 
@@ -321,6 +340,9 @@ void QrCodeReader::onGrabComplete()
         // Reset debounce state when no QR code is visible
         m_pendingResult.clear();
         m_debounceCount = 0;
+        static int noQrCount = 0;
+        if (++noQrCount % 10 == 1)
+            qDebug() << "QrCodeReader: No QR code found in frame (count:" << noQrCount << ")";
     }
 }
 
