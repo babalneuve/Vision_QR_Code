@@ -259,7 +259,7 @@ void QrCodeReader::performScan()
 
     if (!m_target || !m_quirc) {
         if (scanCount % 10 == 1)
-            qDebug() << "QrCodeReader: performScan skipped - target:" << (m_target != nullptr) << "quirc:" << (m_quirc != nullptr);
+            qWarning() << "QrCodeReader: performScan skipped - target:" << (m_target != nullptr) << "quirc:" << (m_quirc != nullptr);
         return;
     }
 
@@ -271,7 +271,7 @@ void QrCodeReader::performScan()
 
     // Skip if a previous grab is still in-flight
     if (m_grabResult) {
-        qDebug() << "QrCodeReader: grabToImage still in-flight, skipping";
+        qWarning() << "QrCodeReader: grabToImage still in-flight, skipping";
         return;
     }
 

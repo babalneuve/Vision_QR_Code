@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QDebug>
+#include <QLoggingCategory>
 #include <QQmlContext>
 #include <QtQml>
 #include "QrCodeReader.h"
@@ -20,6 +21,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_NativeWindows);
 
     QGuiApplication app(argc, argv);
+
+    QLoggingCategory::setFilterRules("*.debug=true");
+    qDebug() << "Debug logging enabled";
 
     // Register QrCodeReader type for QML
     qmlRegisterType<QrCodeReader>("com.qrcode", 1, 0, "QrCodeReader");
