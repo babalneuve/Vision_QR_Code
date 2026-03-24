@@ -4,6 +4,7 @@
 #include <QTranslator>
 #include <QtQml>
 #include "QrCodeReader.h"
+#include "CanHandler.h"
 
 int main(int argc, char *argv[])
 {
@@ -43,6 +44,25 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
 
     engine.load(url);
+
+    // Set up CAN handler (use CAN_INTERFACE env var or default to vcan0)
+    QByteArray canEnv = qgetenv("CAN_INTERFACE");
+    QString canInterface = canEnv.isEmpty() ? QStringLiteral("vcan0")
+                                            : QString::fromLatin1(canEnv);
+    CanHandler canHandler(canInterface);
+
+    // Connect QR code reader to CAN handler after QML is loaded
+    if (!engine.rootObjects().isEmpty()) {
+        QObject *root = engine.rootObjects().first();
+        QrCodeReader *qrReader = root->findChild<QrCodeReader *>();
+        if (qrReader) {
+            QObject::connect(qrReader, &QrCodeReader::qrCodeDetected,
+                             &canHandler, &CanHandler::onQrCodeDetected);
+            qDebug() << "Connected QrCodeReader to CanHandler";
+        } else {
+            qWarning() << "QrCodeReader not found in QML tree";
+        }
+    }
 
     return app.exec();
 }

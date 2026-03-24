@@ -1,4 +1,4 @@
-QT += quick qml multimedia widgets
+QT += quick qml multimedia widgets serialbus
 CONFIG += c++11
 
 DEFINES += QT_DEPRECATED_WARNINGS
@@ -8,6 +8,7 @@ TARGET = vision_qr_code_pc
 SOURCES += \
         main_pc.cpp \
         QrCodeReader.cpp \
+        CanHandler.cpp \
         quirc/quirc.c \
         quirc/decode.c \
         quirc/identify.c \
@@ -15,6 +16,7 @@ SOURCES += \
 
 HEADERS += \
         QrCodeReader.h \
+        CanHandler.h \
         quirc/quirc.h \
         quirc/quirc_internal.h
 
