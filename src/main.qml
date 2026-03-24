@@ -54,24 +54,24 @@ Window {
 
         transform: Scale { origin.x: 0; origin.y: 0; xScale: displayScaleX; yScale: displayScaleY}
 
-        /* Layout horizontal : caméra à gauche (2/3), contrôles à droite (1/3) */
+        /* Horizontal layout: camera on left (2/3), controls on right (1/3) */
         RowLayout {
             anchors.fill: parent
             spacing: 20
 
-            // Zone caméra (2/3 de l'espace)
+            // Camera area (2/3 of space)
             Item {
                 Layout.preferredWidth: (parent.width * 2/3) - 10
                 Layout.fillHeight: true
 
-                // Caméra centrée dans sa zone
+                // Camera centered in its area
                 HmiDigitalCamera {
                     id: camera1
                     objectName: "camera1"
                     width: 800
                     height: 600
 
-                    // Centrer la caméra dans la zone qui lui est allouée
+                    // Center camera in its allocated area
                     x: (parent.width - width) / 2
                     y: (parent.height - height) / 2
 
@@ -84,7 +84,7 @@ Window {
                 }
             }
 
-            // Panneau de contrôle à droite (1/3 de l'espace)
+            // Control panel on right (1/3 of space)
             Rectangle {
                 Layout.preferredWidth: (parent.width / 3) - 10
                 Layout.fillHeight: true
@@ -97,29 +97,29 @@ Window {
                     anchors.margins: 20
                     spacing: 20
 
-                    // Titre
+                    // Title
                     Text {
-                        text: qsTr("Contrôle QR Code")
+                        text: qsTr("QR Code Control")
                         font.pixelSize: 20
                         font.bold: true
                         color: "#333333"
                         Layout.alignment: Qt.AlignHCenter
                     }
 
-                    // Séparateur
+                    // Separator
                     Rectangle {
                         Layout.preferredWidth: parent.width
                         Layout.preferredHeight: 2
                         color: "#cccccc"
                     }
 
-                    // État du scan - prenant toute la largeur avec texte centré
+                    // Scan status - full width with centered text
                     ColumnLayout {
                         spacing: 5
                         Layout.fillWidth: true
 
                         Text {
-                            text: qsTr("État du scan :")
+                            text: qsTr("Scan Status:")
                             font.pixelSize: 16
                             font.bold: true
                             color: "#555555"
@@ -137,7 +137,7 @@ Window {
                             border.color: qrReader1.scanning ? "#c3e6cb" : "#f5c6cb"
                             border.width: 1
 
-                            // Contenu centré
+                            // Centered content
                             Item {
                                 anchors.fill: parent
 
@@ -154,7 +154,7 @@ Window {
                                     }
 
                                     Text {
-                                        text: qrReader1.scanning ? qsTr("Scanning actif") : qsTr("Scan arrêté")
+                                        text: qrReader1.scanning ? qsTr("Scanning Active") : qsTr("Scan Stopped")
                                         font.pixelSize: 16
                                         font.bold: true
                                         color: qrReader1.scanning ? "#155724" : "#721c24"
@@ -165,13 +165,13 @@ Window {
                         }
                     }
 
-                    // Bouton de contrôle - prenant toute la largeur
+                    // Control button - full width
                     ColumnLayout {
                         spacing: 5
                         Layout.fillWidth: true
 
                         Text {
-                            text: qsTr("Contrôle :")
+                            text: qsTr("Control:")
                             font.pixelSize: 16
                             font.bold: true
                             color: "#555555"
@@ -185,7 +185,7 @@ Window {
                             Layout.preferredHeight: 80
                             Layout.leftMargin: 10
                             Layout.rightMargin: 10
-                            text: qrReader1.scanning ? qsTr("■ ARRÊTER LE SCAN") : qsTr("▶ DÉMARRER LE SCAN")
+                            text: qrReader1.scanning ? qsTr("■ STOP SCAN") : qsTr("▶ START SCAN")
                             font.pixelSize: 16
                             font.bold: true
                             font.capitalization: Font.AllUppercase
@@ -214,14 +214,14 @@ Window {
                         }
                     }
 
-                    // Résultat du QR Code - zone toujours visible, texte temporaire
+                    // QR Code result - always visible area, temporary text
                     ColumnLayout {
                         spacing: 5
                         Layout.fillWidth: true
                         Layout.fillHeight: true
 
                         Text {
-                            text: qsTr("Dernier QR Code détecté :")
+                            text: qsTr("Last QR Code Detected:")
                             font.pixelSize: 16
                             font.bold: true
                             color: "#555555"
@@ -259,7 +259,7 @@ Window {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: qsTr("Aucun QR code détecté")
+                                        text: qsTr("No QR code detected")
                                         font.pixelSize: 14
                                         color: "#999999"
                                         visible: !parent.visible && parent.text === ""
@@ -269,9 +269,9 @@ Window {
                         }
                     }
 
-                    // Information supplémentaire
+                    // Additional information
                     Text {
-                        text: qsTr("Le résultat s'affiche pendant 5 secondes")
+                        text: qsTr("Result displayed for 5 seconds")
                         font.pixelSize: 12
                         color: "#999999"
                         Layout.alignment: Qt.AlignHCenter

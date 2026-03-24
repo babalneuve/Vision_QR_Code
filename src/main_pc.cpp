@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QDebug>
+#include <QTranslator>
 #include <QtQml>
 #include "QrCodeReader.h"
 
@@ -20,6 +21,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QGuiApplication app(argc, argv);
+
+    // Load translation for current locale (e.g. fr.qm for French)
+    QTranslator translator;
+    if (translator.load(QLocale(), "vision_qr_code", "_", ":/translations"))
+        app.installTranslator(&translator);
 
     qDebug() << "Qt Quick backend:" << qgetenv("QT_QUICK_BACKEND");
     qDebug() << "Available cameras will be listed by QML";

@@ -29,7 +29,9 @@ HEADERS += \
         quirc/quirc.h \
         quirc/quirc_internal.h
 
-RESOURCES += qml.qrc
+RESOURCES += qml.qrc translations.qrc
+
+TRANSLATIONS += translations/fr.ts
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

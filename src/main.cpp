@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QLoggingCategory>
 #include <QQmlContext>
+#include <QTranslator>
 #include <QtQml>
 #include "QrCodeReader.h"
 
@@ -20,6 +21,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_NativeWindows);
 
     QGuiApplication app(argc, argv);
+
+    // Load translation for current locale (e.g. fr.qm for French)
+    QTranslator translator;
+    if (translator.load(QLocale(), "vision_qr_code", "_", ":/translations"))
+        app.installTranslator(&translator);
 
     QLoggingCategory::setFilterRules("*.debug=true");
     qDebug() << "Debug logging enabled";
@@ -39,8 +45,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Plus besoin de rechercher les boutons supprimés
-    // On ne garde que la caméra 1
+    // Only camera 1 is used — control buttons have been removed from the UI
     QObject *camera1 = root->findChild<QObject *>("camera1", Qt::FindChildrenRecursively);
 
     if (camera1)
@@ -51,14 +56,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Initialiser le GStreamer bus pour la caméra 1 uniquement
+    // Initialize GStreamer bus for camera 1 only
     QMetaObject::invokeMethod(cam1, "GetGstBus");
-
-    // Toutes les connexions aux boutons supprimés sont retirées
-    // On ne garde que ce qui est nécessaire pour la caméra 1 si besoin
-
-    // Note: Les boutons de contrôle (IP, reset, stop) ont été supprimés de l'interface
-    // Donc plus besoin de connexions pour ces fonctionnalités
 
     return app.exec();
 }
