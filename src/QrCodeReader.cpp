@@ -335,6 +335,11 @@ void QrCodeReader::onGrabComplete()
             m_lastResult = decoded;
             qDebug() << "QrCodeReader: Detected QR code:" << decoded;
             emit qrCodeDetected(decoded);
+
+            // Auto-reset after detection - clear the results to allow re-detection
+            m_lastResult.clear();
+            m_pendingResult.clear();
+            m_debounceCount = 0;
         }
     } else {
         // Reset debounce state when no QR code is visible
@@ -445,6 +450,11 @@ void QrCodeReader::onVideoFrame(const QVideoFrame &frame)
             m_lastResult = decoded;
             qDebug() << "QrCodeReader: Detected QR code:" << decoded;
             emit qrCodeDetected(decoded);
+
+            // Auto-reset after detection - clear the results to allow re-detection
+            m_lastResult.clear();
+            m_pendingResult.clear();
+            m_debounceCount = 0;
         }
     } else {
         m_pendingResult.clear();

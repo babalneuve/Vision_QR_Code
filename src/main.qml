@@ -21,7 +21,7 @@ Window {
     property real displayScaleX: isVision307 ? (800/1280) : 1
     property real displayScaleY: isVision307 ? (480/800) : 1
 
-    // QR Code Reader for camera1
+    // QR Code Reader for camera1 (only camera1 used)
     QrCodeReader {
         id: qrReader1
         target: camera1
@@ -31,22 +31,7 @@ Window {
         onQrCodeDetected: {
             console.log("QR Code detected on Camera 1: " + data)
             qrResultText.text = data
-            qrResultRect.visible = true
-            qrHideTimer.restart()
-        }
-    }
-
-    // QR Code Reader for camera2
-    QrCodeReader {
-        id: qrReader2
-        target: camera2
-        scanInterval: 300
-        Component.onCompleted: scanning = true
-
-        onQrCodeDetected: {
-            console.log("QR Code detected on Camera 2: " + data)
-            qrResultText.text = data
-            qrResultRect.visible = true
+            qrResultText.visible = true
             qrHideTimer.restart()
         }
     }
@@ -55,7 +40,10 @@ Window {
     Timer {
         id: qrHideTimer
         interval: 5000
-        onTriggered: qrResultRect.visible = false
+        onTriggered: {
+            qrResultText.visible = false
+            qrResultText.text = ""
+        }
     }
 
     Item {
@@ -66,221 +54,228 @@ Window {
 
         transform: Scale { origin.x: 0; origin.y: 0; xScale: displayScaleX; yScale: displayScaleY}
 
-        /* Simple layout to put multiple items next to each other */
+        /* Layout horizontal : caméra à gauche (2/3), contrôles à droite (1/3) */
         RowLayout {
-            id: rowLayout
             anchors.fill: parent
-            spacing: 10
+            spacing: 20
 
-            HmiDigitalCamera {
-                id: camera1
-                objectName: "camera1"
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                width: 320
-                height: 240
-                camera_info: {
-                    "ip": "10.100.30.3",
-                    "port": 50003,
-                    "path": "/data/camera1_%d.mp4",
-                    "recording_filename": "camera1"
+            // Zone caméra (2/3 de l'espace)
+            Item {
+                Layout.preferredWidth: (parent.width * 2/3) - 10
+                Layout.fillHeight: true
+
+                // Caméra centrée dans sa zone
+                HmiDigitalCamera {
+                    id: camera1
+                    objectName: "camera1"
+                    width: 800
+                    height: 600
+
+                    // Centrer la caméra dans la zone qui lui est allouée
+                    x: (parent.width - width) / 2
+                    y: (parent.height - height) / 2
+
+                    camera_info: {
+                        "ip": "10.100.30.3",
+                        "port": 50003,
+                        "path": "/data/camera1_%d.mp4",
+                        "recording_filename": "camera1"
+                    }
                 }
             }
 
-            HmiDigitalCamera {
-                id: camera2
-                objectName: "camera2"
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                width: 320
-                height: 240
-                camera_info: {
-                    "ip": "10.100.30.32",
-                    "port": 50004,
-                    "path": "/data/camera2_%d.mp4",
-                    "recording_filename": "camera2"
-                }
+            // Panneau de contrôle à droite (1/3 de l'espace)
+            Rectangle {
+                Layout.preferredWidth: (parent.width / 3) - 10
+                Layout.fillHeight: true
+                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                color: "#f0f0f0"
+                radius: 10
 
-                /* Part of the frame can be cut out by setting positive values
-                 * in the crop properties */
-                crop_top: 0
-                crop_left: 0
-                crop_right: 0
-                crop_bottom: 0
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 20
+                    spacing: 20
 
-                /* Disable/enable the aspect ratio (by default 'force_aspect_ratio' is 'true')*/
-                force_aspect_ratio: true
-            }
-
-            ColumnLayout {
-                spacing: 10
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                TextInput {
-                    id: ipcamera1
-                    Layout.preferredWidth: 200
-                    Layout.preferredHeight: 40
-                    text: camera1.camera_info.ip + ":" + camera1.camera_info.port.toString()
-                    inputMethodHints: Qt.ImhFormattedNumbersOnly
-                }
-
-                Button {
-                    id: changeIPButton1
-                    objectName: "ip_button1"
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qsTr("Change Camera1 IP")
-                    font.pixelSize: 15
-
-                    signal ipChange1(ip: string)
-
-                    onClicked: changeIPButton1.ipChange1(ipcamera1.text);
-                }
-
-                TextInput {
-                    id: ipcamera2
-                    Layout.preferredWidth: 200
-                    Layout.preferredHeight: 40
-                    text: camera2.camera_info.ip + ":" + camera2.camera_info.port.toString()
-                    inputMethodHints: Qt.ImhFormattedNumbersOnly
-                }
-
-                Button {
-                    id: changeIPButton2
-                    objectName: "ip_button2"
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qsTr("Change Camera2 IP")
-                    font.pixelSize: 15
-
-                    signal ipChange2(ip: string)
-
-                    onClicked: changeIPButton2.ipChange2(ipcamera2.text);
-                }
-
-                Button {
-                    id: resetPipelineButton1
-                    objectName: "reset_pipeline_button1"
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qsTr("Reset pipeline 1")
-                    font.pixelSize: 15
-
-                    signal resetPipeline1()
-
-                    onClicked: {
-                        camera1.visible = false;
-                        resetPipelineButton1.resetPipeline1();
-                        camera1.visible = true;
+                    // Titre
+                    Text {
+                        text: qsTr("Contrôle QR Code")
+                        font.pixelSize: 20
+                        font.bold: true
+                        color: "#333333"
+                        Layout.alignment: Qt.AlignHCenter
                     }
-                }
 
-                Button {
-                    id: stopButton1
-                    objectName: "stop_button1"
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qsTr("Stop pipeline 1")
-                    font.pixelSize: 15
-
-                    signal stopPipeline1()
-
-                    onClicked: {
-                        stopButton1.stopPipeline1();
+                    // Séparateur
+                    Rectangle {
+                        Layout.preferredWidth: parent.width
+                        Layout.preferredHeight: 2
+                        color: "#cccccc"
                     }
-                }
 
-                Button {
-                    id: resetPipelineButton2
-                    objectName: "reset_pipeline_button2"
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qsTr("Reset pipeline 2")
-                    font.pixelSize: 15
-
-                    signal resetPipeline2()
-
-                    onClicked: {
-                        camera2.visible = false;
-                        resetPipelineButton2.resetPipeline2();
-                        camera2.visible = true;
-                    }
-                }
-
-                Button {
-                    id: stopButton2
-                    objectName: "stop_button2"
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qsTr("Stop pipeline 2")
-                    font.pixelSize: 15
-
-                    signal stopPipeline2()
-
-                    onClicked: {
-                        stopButton2.stopPipeline2();
-                    }
-                }
-
-                // QR Scanning toggle button
-                Button {
-                    id: qrScanToggle
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 40
-                    text: qrReader1.scanning ? qsTr("Stop QR Scan") : qsTr("Start QR Scan")
-                    font.pixelSize: 15
-
-                    onClicked: {
-                        qrReader1.scanning = !qrReader1.scanning
-                        qrReader2.scanning = !qrReader2.scanning
-                    }
-                }
-
-                // QR Code result display
-                Rectangle {
-                    id: qrResultRect
-                    Layout.preferredWidth: 200
-                    Layout.preferredHeight: 80
-                    color: "#e0ffe0"
-                    border.color: "#00aa00"
-                    border.width: 2
-                    radius: 5
-                    visible: false
-
+                    // État du scan - prenant toute la largeur avec texte centré
                     ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 5
+                        spacing: 5
+                        Layout.fillWidth: true
 
                         Text {
-                            text: qsTr("QR Code Detected:")
-                            font.pixelSize: 12
+                            text: qsTr("État du scan :")
+                            font.pixelSize: 16
                             font.bold: true
-                            color: "#006600"
+                            color: "#555555"
+                            Layout.leftMargin: 10
+                            Layout.rightMargin: 10
                         }
 
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 70
+                            Layout.leftMargin: 10
+                            Layout.rightMargin: 10
+                            color: qrReader1.scanning ? "#d4edda" : "#f8d7da"
+                            radius: 5
+                            border.color: qrReader1.scanning ? "#c3e6cb" : "#f5c6cb"
+                            border.width: 1
+
+                            // Contenu centré
+                            Item {
+                                anchors.fill: parent
+
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 10
+
+                                    Rectangle {
+                                        width: 16
+                                        height: 16
+                                        radius: 8
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: qrReader1.scanning ? "#28a745" : "#dc3545"
+                                    }
+
+                                    Text {
+                                        text: qrReader1.scanning ? qsTr("Scanning actif") : qsTr("Scan arrêté")
+                                        font.pixelSize: 16
+                                        font.bold: true
+                                        color: qrReader1.scanning ? "#155724" : "#721c24"
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Bouton de contrôle - prenant toute la largeur
+                    ColumnLayout {
+                        spacing: 5
+                        Layout.fillWidth: true
+
                         Text {
-                            id: qrResultText
+                            text: qsTr("Contrôle :")
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#555555"
+                            Layout.leftMargin: 10
+                            Layout.rightMargin: 10
+                        }
+
+                        Button {
+                            id: qrScanToggle
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 80
+                            Layout.leftMargin: 10
+                            Layout.rightMargin: 10
+                            text: qrReader1.scanning ? qsTr("■ ARRÊTER LE SCAN") : qsTr("▶ DÉMARRER LE SCAN")
+                            font.pixelSize: 16
+                            font.bold: true
+                            font.capitalization: Font.AllUppercase
+
+                            background: Rectangle {
+                                anchors.fill: parent
+                                color: qrReader1.scanning ? "#dc3545" : "#28a745"
+                                radius: 5
+                                border.color: qrReader1.scanning ? "#c82333" : "#218838"
+                                border.width: 1
+                            }
+
+                            contentItem: Text {
+                                text: parent.text
+                                font: parent.font
+                                color: "white"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideNone
+                            }
+
+                            onClicked: {
+                                qrReader1.scanning = !qrReader1.scanning
+                            }
+                        }
+                    }
+
+                    // Résultat du QR Code - zone toujours visible, texte temporaire
+                    ColumnLayout {
+                        spacing: 5
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        Text {
+                            text: qsTr("Dernier QR Code détecté :")
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#555555"
+                            Layout.leftMargin: 10
+                            Layout.rightMargin: 10
+                        }
+
+                        Rectangle {
+                            id: qrResultRect
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            text: ""
-                            font.pixelSize: 11
-                            wrapMode: Text.WrapAnywhere
-                            elide: Text.ElideRight
-                            maximumLineCount: 3
-                            color: "#000000"
+                            Layout.leftMargin: 10
+                            Layout.rightMargin: 10
+                            color: "#e0ffe0"
+                            border.color: "#00aa00"
+                            border.width: 2
+                            radius: 5
+                            visible: true
+
+                            ScrollView {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                clip: true
+
+                                TextArea {
+                                    id: qrResultText
+                                    text: ""
+                                    font.pixelSize: 14
+                                    font.family: "Courier"
+                                    wrapMode: Text.WordWrap
+                                    readOnly: true
+                                    background: null
+                                    color: "#006600"
+                                    visible: false
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: qsTr("Aucun QR code détecté")
+                                        font.pixelSize: 14
+                                        color: "#999999"
+                                        visible: !parent.visible && parent.text === ""
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                // Scanning indicator
-                Rectangle {
-                    Layout.preferredWidth: 170
-                    Layout.preferredHeight: 30
-                    color: qrReader1.scanning ? "#aaffaa" : "#ffaaaa"
-                    radius: 3
-
+                    // Information supplémentaire
                     Text {
-                        anchors.centerIn: parent
-                        text: qrReader1.scanning ? qsTr("Scanning...") : qsTr("Scan Stopped")
+                        text: qsTr("Le résultat s'affiche pendant 5 secondes")
                         font.pixelSize: 12
+                        color: "#999999"
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.bottomMargin: 10
                     }
                 }
             }
