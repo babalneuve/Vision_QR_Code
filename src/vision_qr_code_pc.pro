@@ -24,6 +24,15 @@ RESOURCES += qml_pc.qrc translations.qrc
 
 TRANSLATIONS += translations/fr.ts
 
+# Compile .ts to .qm before rcc processes translations.qrc
+isEmpty(QMAKE_LRELEASE):QMAKE_LRELEASE = $$dirname(QMAKE_QMAKE)/lrelease
+
+updateqm.input = TRANSLATIONS
+updateqm.output = ${QMAKE_FILE_PATH}/${QMAKE_FILE_BASE}.qm
+updateqm.commands = $$QMAKE_LRELEASE ${QMAKE_FILE_IN} -qm ${QMAKE_FILE_OUT}
+updateqm.CONFIG += no_link target_predeps
+QMAKE_EXTRA_COMPILERS += updateqm
+
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
 
