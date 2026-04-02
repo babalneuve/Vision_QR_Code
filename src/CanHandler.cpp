@@ -29,6 +29,11 @@ bool CanHandler::connectDevice()
         return false;
     }
 
+    // Override Qt socketcan default BitRateKey (500000) to match HAL config (250K).
+    // Without this, the backend tries can_set_bitrate(500000) which fails with EBUSY
+    // because the HAL already brought the interface UP at 250K via cansetup.
+    m_device->setConfigurationParameter(QCanBusDevice::BitRateKey, 250000);
+
     if (!m_device->connectDevice()) {
         qWarning() << "CanHandler: failed to connect:" << m_device->errorString();
         delete m_device;

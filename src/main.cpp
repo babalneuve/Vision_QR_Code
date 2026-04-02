@@ -34,8 +34,13 @@ int main(int argc, char *argv[])
     }
 
     // Initialize CAN via Vision 3 HAL
-    hal_can_init();
-    hal_can_init_channel(HAL_CAN_CHANNEL_0, HAL_CAN_BAUD_250K);
+    hal_error canErr = hal_can_init();
+    if (canErr != HAL_E_OK)
+        qCritical() << "hal_can_init() failed:" << canErr;
+
+    canErr = hal_can_init_channel(HAL_CAN_CHANNEL_0, HAL_CAN_BAUD_250K);
+    if (canErr != HAL_E_OK)
+        qCritical() << "hal_can_init_channel(0, 250K) failed:" << canErr;
 
     char *ifname = nullptr;
     QString canInterface = QStringLiteral("can0");
