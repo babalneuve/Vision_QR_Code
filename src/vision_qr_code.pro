@@ -1,4 +1,4 @@
-QT += quick qml multimedia widgets serialbus
+QT += quick qml multimedia widgets
 # QT += virtualkeyboard
 CONFIG += c++11 debug
 PKGCONFIG += gstreamer-1.0

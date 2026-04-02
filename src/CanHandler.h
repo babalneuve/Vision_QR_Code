@@ -2,9 +2,7 @@
 #define CANHANDLER_H
 
 #include <QObject>
-#include <QCanBus>
-#include <QCanBusDevice>
-#include <QCanBusFrame>
+#include <QString>
 
 class CanHandler : public QObject
 {
@@ -27,7 +25,7 @@ private:
     static const quint32 CAN_ID_LED2 = 0x18FF0001;
 
     QString m_interface;
-    QCanBusDevice *m_device;
+    int m_socket;
 };
 
 #endif // CANHANDLER_H

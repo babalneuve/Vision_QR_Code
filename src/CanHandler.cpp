@@ -1,10 +1,18 @@
 #include "CanHandler.h"
 #include <QDebug>
 
+#include <unistd.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <linux/can.h>
+#include <linux/can/raw.h>
+
 CanHandler::CanHandler(const QString &interface, QObject *parent)
     : QObject(parent)
     , m_interface(interface)
-    , m_device(nullptr)
+    , m_socket(-1)
 {
     qDebug() << "CanHandler: using interface" << m_interface;
     connectDevice();
@@ -17,27 +25,32 @@ CanHandler::~CanHandler()
 
 bool CanHandler::connectDevice()
 {
-    if (m_device)
+    if (m_socket >= 0)
         return true;
 
-    QString errorString;
-    m_device = QCanBus::instance()->createDevice(
-        QStringLiteral("socketcan"), m_interface, &errorString);
-
-    if (!m_device) {
-        qWarning() << "CanHandler: failed to create device:" << errorString;
+    m_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    if (m_socket < 0) {
+        qWarning() << "CanHandler: socket() failed:" << strerror(errno);
         return false;
     }
 
-    // Override Qt socketcan default BitRateKey (500000) to match HAL config (250K).
-    // Without this, the backend tries can_set_bitrate(500000) which fails with EBUSY
-    // because the HAL already brought the interface UP at 250K via cansetup.
-    m_device->setConfigurationParameter(QCanBusDevice::BitRateKey, 250000);
+    struct ifreq ifr = {};
+    strncpy(ifr.ifr_name, m_interface.toLatin1().constData(), IFNAMSIZ - 1);
+    if (ioctl(m_socket, SIOCGIFINDEX, &ifr) < 0) {
+        qWarning() << "CanHandler: ioctl SIOCGIFINDEX failed:" << strerror(errno);
+        close(m_socket);
+        m_socket = -1;
+        return false;
+    }
 
-    if (!m_device->connectDevice()) {
-        qWarning() << "CanHandler: failed to connect:" << m_device->errorString();
-        delete m_device;
-        m_device = nullptr;
+    struct sockaddr_can addr = {};
+    addr.can_family = AF_CAN;
+    addr.can_ifindex = ifr.ifr_ifindex;
+
+    if (bind(m_socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) < 0) {
+        qWarning() << "CanHandler: bind() failed:" << strerror(errno);
+        close(m_socket);
+        m_socket = -1;
         return false;
     }
 
@@ -47,33 +60,30 @@ bool CanHandler::connectDevice()
 
 void CanHandler::disconnectDevice()
 {
-    if (m_device) {
-        m_device->disconnectDevice();
-        delete m_device;
-        m_device = nullptr;
+    if (m_socket >= 0) {
+        close(m_socket);
+        m_socket = -1;
         qDebug() << "CanHandler: disconnected from" << m_interface;
     }
 }
 
 void CanHandler::sendLedFrame(quint32 canId, bool state)
 {
-    if (!m_device && !connectDevice()) {
+    if (m_socket < 0 && !connectDevice()) {
         qWarning() << "CanHandler: cannot send frame, device not connected";
         return;
     }
 
-    // DLC=8, default byte 0xFF, LED state is bit 0 of byte 0
-    QByteArray payload(8, static_cast<char>(0xFF));
-    if (state)
-        payload[0] = static_cast<char>(0xFF);  // bit 0 = 1 (all default bits stay 0xFF)
-    else
-        payload[0] = static_cast<char>(0xFE);  // bit 0 = 0, rest stays 1
+    struct can_frame frame = {};
+    frame.can_id = canId | CAN_EFF_FLAG;
+    frame.can_dlc = 8;
+    memset(frame.data, 0xFF, 8);
+    if (!state)
+        frame.data[0] = 0xFE;  // bit 0 = 0, rest stays 1
 
-    QCanBusFrame frame(canId, payload);
-    frame.setExtendedFrameFormat(true);
-
-    if (!m_device->writeFrame(frame)) {
-        qWarning() << "CanHandler: writeFrame failed:" << m_device->errorString();
+    ssize_t nbytes = write(m_socket, &frame, sizeof(frame));
+    if (nbytes != sizeof(frame)) {
+        qWarning() << "CanHandler: write failed:" << strerror(errno);
     } else {
         qDebug() << "CanHandler: sent extended frame ID="
                  << QString("0x%1").arg(canId, 8, 16, QLatin1Char('0'))

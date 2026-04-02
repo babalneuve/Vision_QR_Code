@@ -68,6 +68,9 @@ int main(int argc, char *argv[])
 
     engine.load(url);
 
+    // Re-apply: engine.load() may overwrite filter rules via QML plugin init
+    QLoggingCategory::setFilterRules("*.debug=true");
+
     QObject *root = qobject_cast<QObject*>(engine.rootObjects().first());
     if (!root) {
         qCritical() << "Failed to load root QML object";

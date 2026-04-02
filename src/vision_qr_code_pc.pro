@@ -1,4 +1,4 @@
-QT += quick qml multimedia widgets serialbus
+QT += quick qml multimedia widgets
 CONFIG += c++11
 
 DEFINES += QT_DEPRECATED_WARNINGS
