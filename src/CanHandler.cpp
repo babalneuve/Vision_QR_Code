@@ -13,9 +13,20 @@ CanHandler::CanHandler(const QString &interface, QObject *parent)
     : QObject(parent)
     , m_interface(interface)
     , m_socket(-1)
+    , m_debugTimer(nullptr)
 {
     qDebug() << "CanHandler: using interface" << m_interface;
-    connectDevice();
+    if (connectDevice()) {
+        qDebug() << "CanHandler: device connected successfully";
+    } else {
+        qWarning() << "CanHandler: device connection FAILED at startup";
+    }
+
+    // Start cyclic debug CAN frame (1s interval)
+    m_debugTimer = new QTimer(this);
+    connect(m_debugTimer, &QTimer::timeout, this, &CanHandler::sendDebugFrame);
+    m_debugTimer->start(1000);
+    qDebug() << "CanHandler: debug timer started (1000ms), ID=0x18FF00FF";
 }
 
 CanHandler::~CanHandler()
@@ -28,25 +39,31 @@ bool CanHandler::connectDevice()
     if (m_socket >= 0)
         return true;
 
+    qDebug() << "CanHandler: creating CAN socket...";
     m_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (m_socket < 0) {
         qWarning() << "CanHandler: socket() failed:" << strerror(errno);
         return false;
     }
+    qDebug() << "CanHandler: socket created (fd=" << m_socket << ")";
 
     struct ifreq ifr = {};
     strncpy(ifr.ifr_name, m_interface.toLatin1().constData(), IFNAMSIZ - 1);
+    qDebug() << "CanHandler: looking up interface index for" << m_interface;
     if (ioctl(m_socket, SIOCGIFINDEX, &ifr) < 0) {
-        qWarning() << "CanHandler: ioctl SIOCGIFINDEX failed:" << strerror(errno);
+        qWarning() << "CanHandler: ioctl SIOCGIFINDEX failed:" << strerror(errno)
+                    << "- is the interface UP?";
         close(m_socket);
         m_socket = -1;
         return false;
     }
+    qDebug() << "CanHandler: interface index =" << ifr.ifr_ifindex;
 
     struct sockaddr_can addr = {};
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 
+    qDebug() << "CanHandler: binding socket to" << m_interface;
     if (bind(m_socket, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) < 0) {
         qWarning() << "CanHandler: bind() failed:" << strerror(errno);
         close(m_socket);
@@ -88,6 +105,26 @@ void CanHandler::sendLedFrame(quint32 canId, bool state)
         qDebug() << "CanHandler: sent extended frame ID="
                  << QString("0x%1").arg(canId, 8, 16, QLatin1Char('0'))
                  << "state=" << state;
+    }
+}
+
+void CanHandler::sendDebugFrame()
+{
+    if (m_socket < 0 && !connectDevice()) {
+        qWarning() << "CanHandler: debug frame skipped, device not connected";
+        return;
+    }
+
+    struct can_frame frame = {};
+    frame.can_id = CAN_ID_DEBUG | CAN_EFF_FLAG;
+    frame.can_dlc = 8;
+    memset(frame.data, 0xAA, 8);
+
+    ssize_t nbytes = write(m_socket, &frame, sizeof(frame));
+    if (nbytes != sizeof(frame)) {
+        qWarning() << "CanHandler: debug frame write failed:" << strerror(errno);
+    } else {
+        qDebug() << "CanHandler: debug frame sent ID=0x18ff00ff";
     }
 }
 
