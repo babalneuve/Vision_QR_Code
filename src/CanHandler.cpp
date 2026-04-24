@@ -130,19 +130,23 @@ void CanHandler::sendDebugFrame()
 
 void CanHandler::onQrCodeDetected(const QString &data)
 {
-    if (data == QStringLiteral("LED 1 : ON")) {
-        qDebug() << "CanHandler: QR code 'LED 1 : ON'";
-        sendLedFrame(CAN_ID_LED1, true);
-    } else if (data == QStringLiteral("LED 1 : OFF")) {
-        qDebug() << "CanHandler: QR code 'LED 1 : OFF'";
-        sendLedFrame(CAN_ID_LED1, false);
-    } else if (data == QStringLiteral("LED 2 : ON")) {
-        qDebug() << "CanHandler: QR code 'LED 2 : ON'";
-        sendLedFrame(CAN_ID_LED2, true);
-    } else if (data == QStringLiteral("LED 2 : OFF")) {
-        qDebug() << "CanHandler: QR code 'LED 2 : OFF'";
-        sendLedFrame(CAN_ID_LED2, false);
-    } else {
-        qDebug() << "CanHandler: ignoring unrecognized QR code:" << data;
+    const QStringList lines = data.split('\n', Qt::SkipEmptyParts);
+    for (const QString &line : lines) {
+        const QString cmd = line.trimmed();
+        if (cmd == QStringLiteral("LED 1 : ON")) {
+            qDebug() << "CanHandler: QR code 'LED 1 : ON'";
+            sendLedFrame(CAN_ID_LED1, true);
+        } else if (cmd == QStringLiteral("LED 1 : OFF")) {
+            qDebug() << "CanHandler: QR code 'LED 1 : OFF'";
+            sendLedFrame(CAN_ID_LED1, false);
+        } else if (cmd == QStringLiteral("LED 2 : ON")) {
+            qDebug() << "CanHandler: QR code 'LED 2 : ON'";
+            sendLedFrame(CAN_ID_LED2, true);
+        } else if (cmd == QStringLiteral("LED 2 : OFF")) {
+            qDebug() << "CanHandler: QR code 'LED 2 : OFF'";
+            sendLedFrame(CAN_ID_LED2, false);
+        } else {
+            qDebug() << "CanHandler: ignoring unrecognized command:" << cmd;
+        }
     }
 }

@@ -8,6 +8,9 @@
 #include <QtQml>
 #include "QrCodeReader.h"
 #include "CanHandler.h"
+#include "DateTimeHandler.h"
+#include "QrLogger.h"
+#include "UsbWatcher.h"
 
 extern "C" {
 #include <libhal.h>
@@ -62,7 +65,18 @@ int main(int argc, char *argv[])
     // Register QrCodeReader type for QML
     qmlRegisterType<QrCodeReader>("com.qrcode", 1, 0, "QrCodeReader");
 
+    // Expose DateTimeHandler as a singleton to QML
+    DateTimeHandler dateTimeHandler;
+    qmlRegisterSingletonType<DateTimeHandler>("com.datetime", 1, 0, "DateTimeHandler",
+        [](QQmlEngine *, QJSEngine *) -> QObject * {
+            return new DateTimeHandler();
+        });
+
     QQmlApplicationEngine engine;
+
+    // Must be set before engine.load() so QML can resolve usbWatcher on startup
+    UsbWatcher usbWatcher;
+    engine.rootContext()->setContextProperty("usbWatcher", &usbWatcher);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
 
@@ -92,12 +106,16 @@ int main(int argc, char *argv[])
     QMetaObject::invokeMethod(cam1, "GetGstBus");
 
     // Set up CAN handler and connect to QR code reader
-    CanHandler canHandler(canInterface);
+    CanHandler  canHandler(canInterface);
+    QrLogger    qrLogger(QStringLiteral("/data/vision_qr_code/logs"));
+
     QrCodeReader *qrReader = root->findChild<QrCodeReader *>();
     if (qrReader) {
         QObject::connect(qrReader, &QrCodeReader::qrCodeDetected,
                          &canHandler, &CanHandler::onQrCodeDetected);
-        qDebug() << "Connected QrCodeReader to CanHandler";
+        QObject::connect(qrReader, &QrCodeReader::qrCodeDetected,
+                         &qrLogger,  &QrLogger::logScan);
+        qDebug() << "Connected QrCodeReader to CanHandler and QrLogger";
     } else {
         qWarning() << "QrCodeReader not found in QML tree";
     }

@@ -1,4 +1,4 @@
-QT += quick qml multimedia widgets
+QT += quick qml multimedia widgets svg
 # QT += virtualkeyboard
 CONFIG += c++11 debug
 PKGCONFIG += gstreamer-1.0
@@ -20,6 +20,9 @@ SOURCES += \
         main.cpp \
         QrCodeReader.cpp \
         CanHandler.cpp \
+        DateTimeHandler.cpp \
+        QrLogger.cpp \
+        UsbWatcher.cpp \
         quirc/quirc.c \
         quirc/decode.c \
         quirc/identify.c \
@@ -28,6 +31,9 @@ SOURCES += \
 HEADERS += \
         QrCodeReader.h \
         CanHandler.h \
+        DateTimeHandler.h \
+        QrLogger.h \
+        UsbWatcher.h \
         quirc/quirc.h \
         quirc/quirc_internal.h
 
